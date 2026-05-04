@@ -43,42 +43,44 @@ function ProductCard({ item, index }: { item: Product; index: number }) {
   }));
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80)} style={[styles.cardContainer, animatedStyle]}>
-      <Pressable
-        onPressIn={() => (scale.value = withSpring(0.96))}
-        onPressOut={() => (scale.value = withSpring(1))}
-        onPress={() => router.push(`/product/${item.id}` as any)}
-        style={styles.card}
-      >
-        <Image source={{ uri: item.image_url }} style={styles.image} />
-        {item.stock === 0 && (
-          <View style={styles.outOfStockBadge}>
-            <Text style={styles.outOfStockText}>Out of Stock</Text>
+    <Animated.View entering={FadeInDown.delay(index * 80)} style={styles.cardContainer}>
+      <Animated.View style={animatedStyle}>
+        <Pressable
+          onPressIn={() => (scale.value = withSpring(0.96))}
+          onPressOut={() => (scale.value = withSpring(1))}
+          onPress={() => router.push(`/product/${item.id}` as any)}
+          style={styles.card}
+        >
+          <Image source={{ uri: item.image_url }} style={styles.image} />
+          {item.stock === 0 && (
+            <View style={styles.outOfStockBadge}>
+              <Text style={styles.outOfStockText}>Out of Stock</Text>
+            </View>
+          )}
+          <View style={styles.cardContent}>
+            <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+            <View style={styles.priceRow}>
+              <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+              {cartItem && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{cartItem.quantity}</Text>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity
+              style={[styles.addButton, item.stock === 0 && styles.disabledButton]}
+              disabled={item.stock === 0}
+              onPress={() => {
+                addItem(item, 1);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }}
+            >
+              <FontAwesome name="plus" size={13} color="#fff" />
+              <Text style={styles.addButtonText}>Add</Text>
+            </TouchableOpacity>
           </View>
-        )}
-        <View style={styles.cardContent}>
-          <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-            {cartItem && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{cartItem.quantity}</Text>
-              </View>
-            )}
-          </View>
-          <TouchableOpacity
-            style={[styles.addButton, item.stock === 0 && styles.disabledButton]}
-            disabled={item.stock === 0}
-            onPress={() => {
-              addItem(item, 1);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            }}
-          >
-            <FontAwesome name="plus" size={13} color="#fff" />
-            <Text style={styles.addButtonText}>Add</Text>
-          </TouchableOpacity>
-        </View>
-      </Pressable>
+        </Pressable>
+      </Animated.View>
     </Animated.View>
   );
 }
