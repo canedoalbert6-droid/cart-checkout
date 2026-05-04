@@ -48,13 +48,13 @@ export default function OnboardingScreen() {
       slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
       await completeOnboarding();
-      router.replace('/(tabs)');
+      router.replace('/(drawer)' as any);
     }
   };
 
   const skip = async () => {
     await completeOnboarding();
-    router.replace('/(tabs)');
+    router.replace('/(drawer)' as any);
   };
 
   const renderItem = ({ item, index }: { item: typeof SLIDES[0], index: number }) => {

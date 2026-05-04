@@ -78,23 +78,24 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuth = segments[0] === '(auth)';
-    const inOnboarding = segments[0] === 'onboarding';
+    const seg0 = segments[0] as string;
+    const inAuth = seg0 === '(auth)';
+    const inOnboarding = seg0 === 'onboarding';
 
     if (!user && !inAuth) {
       // Not logged in → go to login
-      setTimeout(() => router.replace('/(auth)/login'), 1);
+      setTimeout(() => router.replace('/(auth)/login' as any), 1);
     } else if (user && inAuth) {
       // Logged in but on auth screen → go to app
       if (!onboardingComplete) {
         setTimeout(() => router.replace('/onboarding'), 1);
       } else {
-        setTimeout(() => router.replace('/(drawer)'), 1);
+        setTimeout(() => router.replace('/(drawer)' as any), 1);
       }
     } else if (user && !inAuth && !inOnboarding && onboardingComplete === false) {
       setTimeout(() => router.replace('/onboarding'), 1);
     }
-  }, [user, isLoading, segments[0], onboardingComplete]);
+  }, [user, isLoading, segments[0] as string, onboardingComplete]);
 
   return (
     <Stack screenOptions={{ animation: 'fade' }}>

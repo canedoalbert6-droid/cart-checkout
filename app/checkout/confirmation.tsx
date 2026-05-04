@@ -29,11 +29,11 @@ export default function ConfirmationScreen() {
       </Animated.Text>
 
       <Animated.View entering={FadeInUp.delay(1000)} style={styles.actions}>
-        <TouchableOpacity style={styles.primaryButton} onPress={() => router.replace('/(tabs)')}>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => router.replace('/(drawer)' as any)}>
           <Text style={styles.primaryButtonText}>Back to Shop</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => router.replace('/(tabs)/orders')}>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => router.replace('/(drawer)/(tabs)/orders' as any)}>
           <Text style={styles.secondaryButtonText}>View Order History</Text>
         </TouchableOpacity>
       </Animated.View>

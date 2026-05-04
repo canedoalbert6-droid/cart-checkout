@@ -108,7 +108,7 @@ export default function CartScreen() {
           <View style={styles.emptyContainer}>
             <FontAwesome name="shopping-basket" size={64} color="#CBD5E1" />
             <Text style={styles.emptyText}>Your cart is empty.</Text>
-            <TouchableOpacity style={styles.shopBtn} onPress={() => router.push('/(drawer)')}>
+            <TouchableOpacity style={styles.shopBtn} onPress={() => router.push('/(drawer)' as any)}>
               <Text style={styles.shopBtnText}>Start Shopping</Text>
             </TouchableOpacity>
           </View>
