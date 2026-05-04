@@ -6,7 +6,6 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithCredential,
-  FirebaseError,
 } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { User } from '../types';
