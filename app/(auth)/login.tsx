@@ -10,7 +10,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { makeRedirectUri } from 'expo-auth-session';
@@ -161,7 +161,7 @@ export default function LoginScreen() {
           {/* Google Button */}
           <TouchableOpacity
             style={[styles.googleBtn, (googleLoading || !request) && styles.btnDisabled]}
-            onPress={() => promptAsync()}
+            onPress={() => promptAsync({})}
             disabled={googleLoading || !request}
           >
             {googleLoading
@@ -178,11 +178,9 @@ export default function LoginScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
-          <Link href="/(auth)/signup" asChild>
-            <TouchableOpacity>
-              <Text style={styles.footerLink}>Sign Up</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+            <Text style={styles.footerLink}>Sign Up</Text>
+          </TouchableOpacity>
         </View>
 
       </ScrollView>
