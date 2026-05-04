@@ -12,15 +12,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
-import { makeRedirectUri } from 'expo-auth-session';
+import { useAuthRequest, makeRedirectUri, AuthSessionResult } from 'expo-auth-session';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { validateEmail, validatePassword } from '../../src/utils/validators';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Google OAuth endpoints
+// Google OAuth discovery document
 const GOOGLE_DISCOVERY = {
   authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
   tokenEndpoint: 'https://oauth2.googleapis.com/token',
@@ -38,23 +37,25 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // expo-auth-session v7 API — use AuthSession.useAuthRequest directly
   const redirectUri = makeRedirectUri({ scheme: 'cartcheckout' });
 
-  const [request, response, promptAsync] = AuthSession.useAuthRequest(
+  const [request, response, promptAsync] = useAuthRequest(
     {
       clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
       redirectUri,
       scopes: ['openid', 'profile', 'email'],
-      responseType: AuthSession.ResponseType.IdToken,
+      responseType: 'id_token',      // string literal — no enum needed
+      usePKCE: false,
       extraParams: { nonce: 'nonce' },
     },
     GOOGLE_DISCOVERY,
   );
 
   React.useEffect(() => {
-    if (response?.type === 'success') {
-      const idToken = response.params?.id_token;
+    if (!response) return;
+
+    if (response.type === 'success') {
+      const idToken = (response as any).params?.id_token as string | undefined;
       if (!idToken) {
         setApiError('Google sign-in did not return an ID token.');
         return;
@@ -64,8 +65,9 @@ export default function LoginScreen() {
         .then(() => router.replace('/(drawer)'))
         .catch((e: any) => setApiError(e.message ?? 'Google sign-in failed.'))
         .finally(() => setGoogleLoading(false));
-    } else if (response?.type === 'error') {
-      setApiError(response.error?.message ?? 'Google sign-in was cancelled or failed.');
+    } else if (response.type === 'error') {
+      const msg = (response as any).error?.message as string | undefined;
+      setApiError(msg ?? 'Google sign-in was cancelled or failed.');
     }
   }, [response]);
 
