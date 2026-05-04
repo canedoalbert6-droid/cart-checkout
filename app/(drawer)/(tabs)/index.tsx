@@ -47,7 +47,7 @@ function ProductCard({ item, index }: { item: Product; index: number }) {
       <Pressable
         onPressIn={() => (scale.value = withSpring(0.96))}
         onPressOut={() => (scale.value = withSpring(1))}
-        onPress={() => router.push(`/product/${item.id}`)}
+        onPress={() => router.push(`/product/${item.id}` as any)}
         style={styles.card}
       >
         <Image source={{ uri: item.image_url }} style={styles.image} />

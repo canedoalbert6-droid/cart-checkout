@@ -62,7 +62,7 @@ export default function LoginScreen() {
       }
       setGoogleLoading(true);
       signInWithGoogle(idToken)
-        .then(() => router.replace('/(drawer)'))
+        .then(() => router.replace('/(drawer)' as any))
         .catch((e: any) => setApiError(e.message ?? 'Google sign-in failed.'))
         .finally(() => setGoogleLoading(false));
     } else if (response.type === 'error') {
@@ -82,7 +82,7 @@ export default function LoginScreen() {
       setLoading(true);
       setApiError(null);
       await signIn(email, password);
-      router.replace('/(drawer)');
+      router.replace('/(drawer)' as any);
     } catch (e: any) {
       setApiError(e.message ?? 'Login failed. Please try again.');
     } finally {
@@ -180,7 +180,7 @@ export default function LoginScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <TouchableOpacity onPress={() => router.push('/(auth)/signup' as any)}>
             <Text style={styles.footerLink}>Sign Up</Text>
           </TouchableOpacity>
         </View>
