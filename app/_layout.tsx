@@ -1,27 +1,21 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
 import { CartProvider, useCart } from '../src/context/CartContext';
+import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { initDB } from '../src/db/sqlite';
 import { OfflineBanner } from '../src/components/OfflineBanner';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: '(drawer)',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -32,7 +26,6 @@ export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
   const [initialOnboardingComplete, setInitialOnboardingComplete] = useState<boolean | null>(null);
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -41,11 +34,16 @@ export default function RootLayout() {
     async function setup() {
       try {
         const db = await initDB();
-        const setting = await db.getFirstAsync<{value: string}>('SELECT value FROM settings WHERE key = ?', ['onboarding_complete']);
+        const setting = await db.getFirstAsync<{ value: string }>(
+          'SELECT value FROM settings WHERE key = ?',
+          ['onboarding_complete']
+        );
         setInitialOnboardingComplete(setting?.value === 'true');
         setDbReady(true);
       } catch (e) {
-        console.error("Failed to initialize DB", e);
+        console.error('Failed to initialize DB', e);
+        setDbReady(true);
+        setInitialOnboardingComplete(false);
       }
     }
     setup();
@@ -62,39 +60,53 @@ export default function RootLayout() {
   }
 
   return (
-    <CartProvider initialOnboardingComplete={initialOnboardingComplete}>
-      <OfflineBanner />
-      <RootLayoutNav />
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider initialOnboardingComplete={initialOnboardingComplete}>
+        <OfflineBanner />
+        <RootLayoutNav />
+      </CartProvider>
+    </AuthProvider>
   );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const { user, isLoading } = useAuth();
   const { onboardingComplete } = useCart();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (onboardingComplete !== null) {
-      const inOnboarding = segments[0] === 'onboarding';
+    if (isLoading) return;
 
-      if (!onboardingComplete && !inOnboarding) {
+    const inAuth = segments[0] === '(auth)';
+    const inOnboarding = segments[0] === 'onboarding';
+
+    if (!user && !inAuth) {
+      // Not logged in → go to login
+      setTimeout(() => router.replace('/(auth)/login'), 1);
+    } else if (user && inAuth) {
+      // Logged in but on auth screen → go to app
+      if (!onboardingComplete) {
         setTimeout(() => router.replace('/onboarding'), 1);
-      } else if (onboardingComplete && inOnboarding) {
-        setTimeout(() => router.replace('/(tabs)'), 1);
+      } else {
+        setTimeout(() => router.replace('/(drawer)'), 1);
       }
+    } else if (user && !inAuth && !inOnboarding && onboardingComplete === false) {
+      setTimeout(() => router.replace('/onboarding'), 1);
     }
-  }, [onboardingComplete, segments[0]]); // Only depend on the first segment for stability
+  }, [user, isLoading, segments[0], onboardingComplete]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ animation: 'fade' }}>
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="conflict-resolution" options={{ presentation: 'modal', title: 'Conflict Resolution' }} />
-      </Stack>
-    </ThemeProvider>
+    <Stack screenOptions={{ animation: 'fade' }}>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="conflict-resolution" options={{ presentation: 'modal', title: 'Conflict Resolution' }} />
+      <Stack.Screen
+        name="product/[id]"
+        options={{ headerShown: false, presentation: 'card' }}
+      />
+    </Stack>
   );
 }

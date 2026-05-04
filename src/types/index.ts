@@ -37,6 +37,13 @@ export interface Order {
   synced_at?: number;
 }
 
+export interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+}
+
 export interface CartState {
   items: CartItem[];
   operations: CartOperation[];
