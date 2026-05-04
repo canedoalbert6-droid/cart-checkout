@@ -8,17 +8,23 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
+import * as AuthSession from 'expo-auth-session';
+import { makeRedirectUri } from 'expo-auth-session';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { validateEmail, validatePassword } from '../../src/utils/validators';
 
 WebBrowser.maybeCompleteAuthSession();
+
+// Google OAuth endpoints
+const GOOGLE_DISCOVERY = {
+  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+  tokenEndpoint: 'https://oauth2.googleapis.com/token',
+};
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle } = useAuth();
@@ -32,18 +38,34 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const [, response, promptAsync] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-  });
+  // expo-auth-session v7 API — use AuthSession.useAuthRequest directly
+  const redirectUri = makeRedirectUri({ scheme: 'cartcheckout' });
+
+  const [request, response, promptAsync] = AuthSession.useAuthRequest(
+    {
+      clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
+      redirectUri,
+      scopes: ['openid', 'profile', 'email'],
+      responseType: AuthSession.ResponseType.IdToken,
+      extraParams: { nonce: 'nonce' },
+    },
+    GOOGLE_DISCOVERY,
+  );
 
   React.useEffect(() => {
     if (response?.type === 'success') {
-      const { id_token } = response.params;
+      const idToken = response.params?.id_token;
+      if (!idToken) {
+        setApiError('Google sign-in did not return an ID token.');
+        return;
+      }
       setGoogleLoading(true);
-      signInWithGoogle(id_token)
+      signInWithGoogle(idToken)
         .then(() => router.replace('/(drawer)'))
-        .catch((e: any) => setApiError(e.message))
+        .catch((e: any) => setApiError(e.message ?? 'Google sign-in failed.'))
         .finally(() => setGoogleLoading(false));
+    } else if (response?.type === 'error') {
+      setApiError(response.error?.message ?? 'Google sign-in was cancelled or failed.');
     }
   }, [response]);
 
@@ -67,7 +89,10 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
         {/* Header */}
@@ -135,9 +160,9 @@ export default function LoginScreen() {
 
           {/* Google Button */}
           <TouchableOpacity
-            style={[styles.googleBtn, googleLoading && styles.btnDisabled]}
+            style={[styles.googleBtn, (googleLoading || !request) && styles.btnDisabled]}
             onPress={() => promptAsync()}
-            disabled={googleLoading}
+            disabled={googleLoading || !request}
           >
             {googleLoading
               ? <ActivityIndicator color="#6366F1" />
